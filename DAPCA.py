@@ -1,4 +1,5 @@
 from __future__ import annotations
+from collections import Counter
 from typing import Dict, Optional, Tuple
 
 import numpy as np
@@ -102,7 +103,7 @@ class NNDescentWithTree(YourCustomKNN):
                 self.qtree is not None
             ), "Calling fit(X) is mandatory if X is not provided."
         q = self.qtree.query(Y, k=self.n_neighbors)
-        return (q[1],q[0])
+        return (q[1], q[0])
 
 
 def sub2ind(array_shape, rows, cols):
@@ -126,7 +127,7 @@ def DAPCA(
     knn_class_instance=None,
     n_jobs=-1,
     eps=1e-3,
-    initialV = None
+    initialV=None
 ):
     """
     DAPCA calculated Domain Adaptation Principal Components (DAPCA) or,
@@ -470,7 +471,7 @@ def DAPCA(
         kNNs = np.zeros((nY, kNN), dtype=int)
         kNNDist = kNNs.astype(float)
         # estimate step of Y records to calculate distances to all X records
-        maxY = np.int(np.floor(1e8 / nX))
+        maxY = int(np.floor(1e8 / nX))
         if maxY > nY:
             maxY = nY
 
@@ -511,20 +512,21 @@ def DAPCA(
 
                 # Search NN
                 if hasattr(knn_class_instance, "fit"):
-                    dist, ind = knn_class_instance.kneighbors(PY[k - 1 : kk, :])
+                    dist, ind = knn_class_instance.kneighbors(PY[k - 1: kk, :])
                 else:
-                    dist, ind = knn_class_instance.kneighbors(PY[k - 1 : kk, :], PX)
+                    dist, ind = knn_class_instance.kneighbors(
+                        PY[k - 1: kk, :], PX)
                 if dist.shape[1] != kNN:
                     raise ValueError(
                         f"Custom kNN class returned a different number of NN than kNN={kNN} parameter"
                     )
 
                 # Get kNN element
-                kNNDist[k - 1 : kk, :] = -gamma * kNNweights(dist[:, :kNN])
-                kNNs[k - 1 : kk, :] = ind[:, :kNN]
+                kNNDist[k - 1: kk, :] = -gamma * kNNweights(dist[:, :kNN])
+                kNNs[k - 1: kk, :] = ind[:, :kNN]
                 # Correct wYY
-                wYY[k - 1 : kk] = wYY[k - 1 : kk] + np.sum(
-                    kNNDist[k - 1 : kk, :], 1, keepdims=1
+                wYY[k - 1: kk] = wYY[k - 1: kk] + np.sum(
+                    kNNDist[k - 1: kk, :], 1, keepdims=1
                 )
                 # Add summand to Q2
                 nS = kk - k + 1
@@ -537,9 +539,9 @@ def DAPCA(
                 #    )
                 tl = np.tile(np.arange(nS)[:, None], (1, kNN))
                 tmp[tl, ind[:, :kNN]] = kNNDist[
-                    k - 1 : kk, :
+                    k - 1: kk, :
                 ]
-                tmp = Y[k - 1 : kk, :].T @ tmp @ X
+                tmp = Y[k - 1: kk, :].T @ tmp @ X
                 Q2 = Q2 + tmp + tmp.T
                 # Shift k in Y
                 k = kk + 1
@@ -588,7 +590,8 @@ def DAPCA(
         HW = np.sum(V.T @ Q @ V)
         if verbose > 2:
             if iterNum == 0:
-                print(f"Iteration: {iterNum}", "non-neg:", np.sum(D >= 0), "Hw:", HW)
+                print(f"Iteration: {iterNum}", "non-neg:",
+                      np.sum(D >= 0), "Hw:", HW)
             else:
                 print(
                     f"Iteration: {iterNum}",
@@ -662,7 +665,8 @@ def calc_selfconsistency(
         if PX.shape[1] == 1:
             for l in unique_labels:
                 inds = np.where(labels == l)[0]
-                plt.hist(PX[inds], bins=nbins, alpha=0.5, range=rng, label=str(l))
+                plt.hist(PX[inds], bins=nbins, alpha=0.5,
+                         range=rng, label=str(l))
             plt.hist(
                 PY[:, 0], bins=nbins, color="grey", alpha=0.5, range=rng, label="Y"
             )
@@ -698,7 +702,8 @@ def calc_selfconsistency(
         if PX.shape[1] == 1:
             for l in unique_labels:
                 inds = np.where(labels == l)[0]
-                plt.hist(PX[inds], bins=nbins, alpha=0.5, range=rng, label=str(l))
+                plt.hist(PX[inds], bins=nbins, alpha=0.5,
+                         range=rng, label=str(l))
             for l in unique_predicted_labels:
                 inds = np.where(labels == l)[0]
                 plt.hist(
@@ -710,7 +715,8 @@ def calc_selfconsistency(
                 plt.scatter(PX[inds, 0], PX[inds, 1], s=5, label=str(l))
             for l in unique_predicted_labels:
                 inds = np.where(labels == l)[0]
-                plt.scatter(PY[inds, 0], PY[inds, 1], s=5, label=str(l) + "_pr")
+                plt.scatter(PY[inds, 0], PY[inds, 1],
+                            s=5, label=str(l) + "_pr")
             plt.axis("equal")
         plt.legend()
         plt.title("DAPC1 predictions")
@@ -725,7 +731,8 @@ def calc_selfconsistency(
         if PX_inv.shape[1] == 1:
             for l in unique_labels:
                 inds = np.where(labels == l)[0]
-                plt.hist(PX_inv[inds], bins=nbins, alpha=0.5, range=rng, label=str(l))
+                plt.hist(PX_inv[inds], bins=nbins,
+                         alpha=0.5, range=rng, label=str(l))
             for l in unique_predicted_labels:
                 inds = np.where(labels == l)[0]
                 plt.hist(
@@ -734,10 +741,12 @@ def calc_selfconsistency(
         else:
             for l in unique_labels:
                 inds = np.where(labels == l)[0]
-                plt.scatter(PX_inv[inds, 0], PX_inv[inds, 1], s=5, label=str(l))
+                plt.scatter(PX_inv[inds, 0],
+                            PX_inv[inds, 1], s=5, label=str(l))
             for l in unique_predicted_labels:
                 inds = np.where(labels == l)[0]
-                plt.scatter(PY_inv[inds, 0], PY_inv[inds, 1], s=5, label=str(l) + "_pr")
+                plt.scatter(PY_inv[inds, 0], PY_inv[inds, 1],
+                            s=5, label=str(l) + "_pr")
             plt.axis("equal")
         plt.legend()
         plt.title("DAPC1 inverse")
@@ -750,9 +759,6 @@ def calc_selfconsistency(
         kNNs,
         kNNs_inv,
     ]
-
-
-from collections import Counter
 
 
 def kNN_predict(labels, kNNs):
